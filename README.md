@@ -1,7 +1,7 @@
 # card_show
  created by pygame,
 
-__version 0.0.1__
+## version 0.0.1
 
 __first commit__
 
