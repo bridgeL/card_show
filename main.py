@@ -1,64 +1,9 @@
-import sys
-import random
-import math
-import os
-import getopt
 import pygame
-from socket import *
 from pygame.locals import *
+from card import *
 
 
-def load_png(name):
-    """ Load image and return image object"""
-    fullname = os.path.join('data', name)
-    try:
-        image = pygame.image.load(fullname)
-        if image.get_alpha is None:
-            image = image.convert()
-        else:
-            image = image.convert_alpha()
-    except:
-        print('Cannot load image:', fullname)
-
-    return image, image.get_rect()
-
-
-class Card(pygame.sprite.Sprite):
-    def __init__(self, id, lable, headname):
-        super(Card, self).__init__()
-        self.image, self.rect = load_png(headname)
-
-        self.id = id
-        self.lable = lable
-        self.headup = True
-        self.catch = False
-        self.movepos = [0, 0]
-
-    def update(self):
-        if self.movepos[0] != 0 or self.movepos[1] != 0:
-            self.rect = self.rect.move(self.movepos)
-            self.movepos = [0, 0]
-
-    def overturn(self):
-        headup = not headup
-
-    def iscatch(self, pos):
-        self.catch = self.rect.collidepoint(pos)
-        return self.catch
-
-    def move(self, rel):
-        self.movepos[0] += rel[0]
-        self.movepos[1] += rel[1]
-
-
-class CardHeap():
-    def __init__(self):
-        self.items = pygame.sprite.Group()
-        self.count = 0
-
-    def add(self, card):
-        self.items.add(card)
-        count += 1
+MG = dynamic({'no_action': 0, 'click_l': 1, 'click_r': 2, 'move': 3})
 
 
 def main():
@@ -72,17 +17,13 @@ def main():
     background = background.convert()
     background.fill((255, 255, 255))
 
-    # Initialise cards
-    a0 = Card(0, 'criminal', 'criminal.jpg')
-    a1 = Card(1, 'person', 'person.jpg')
+    # card initialise
+    cardinit()
 
-    a1.move((100, 100))
-    a1.update()
-
-    # Initialise sprites
-    b = pygame.sprite.OrderedUpdates()
-    b.add(a0)
-    b.add(a1)
+    # Initialise mouse_gesture
+    mouse_gesture = MG.no_action
+    mouse_click_pos = (0, 0)
+    card_click = CardHeap.null_card
 
     # Initialise clock
     clock = pygame.time.Clock()
@@ -97,24 +38,47 @@ def main():
         clock.tick(60)
 
         for event in pygame.event.get():
+            print(event)
             if event.type == QUIT:
                 return
             elif event.type == MOUSEBUTTONDOWN:
-                print('-----------------down', event)
-                if(a0.iscatch(event.pos)):
-                    print("------------------------------------")
+                for ch in reversed(allcardheaps):
+                    card_find, card_click = ch.isclick(event.pos)
+                    if card_find:
+                        mouse_click_pos = event.pos
+                        if event.button == 1:
+                            mouse_gesture = MG.click_l
+                            break
+                        elif event.button == 3:
+                            mouse_gesture = MG.click_r
+                            break
+
             elif event.type == MOUSEMOTION:
-                if(a0.catch):
-                    a0.move(event.rel)
-                    print(event.rel)
+                if mouse_gesture == MG.click_l:
+                    if abs(event.pos[0]-mouse_click_pos[0]) > 10:
+                        mouse_gesture = MG.move
+                        card_click.move([event.pos[0] - mouse_click_pos[0], 0])
+                elif mouse_gesture == MG.move:
+                    card_click.move([event.rel[0], 0])
 
             elif event.type == MOUSEBUTTONUP:
-                print('-------------------up', event)
-                a0.catch = False
+                if mouse_gesture == MG.click_l and event.button == 1:
+                    card_click.overturn()
+                elif mouse_gesture == MG.click_r and event.button == 3:
+                    print(card_click.groups())
 
-        b.clear(screen, background)
-        b.update()
-        b.draw(screen)
+                mouse_gesture = MG.no_action
+                card_click = CardHeap.null_card
+
+        for i in allcardheaps:
+            i.items.clear(screen, background)
+
+        for i in allcardheaps:
+            i.items.update()
+
+        for i in allcardheaps:
+            i.items.draw(screen)
+
         pygame.display.flip()
 
 
