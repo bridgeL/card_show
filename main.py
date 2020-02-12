@@ -24,17 +24,15 @@ def load_png(name):
 
 
 class Card(pygame.sprite.Sprite):
-    def __init__(self, name, headname):
+    def __init__(self, id, lable, headname):
         super(Card, self).__init__()
-        self.id = 0
-        self.name = ''
+        self.image, self.rect = load_png(headname)
+
+        self.id = id
+        self.lable = lable
         self.headup = True
         self.catch = False
-
-        self.name = name
         self.movepos = [0, 0]
-
-        self.image, self.rect = load_png(headname)
 
     def update(self):
         if self.movepos[0] != 0 or self.movepos[1] != 0:
@@ -75,14 +73,8 @@ def main():
     background.fill((255, 255, 255))
 
     # Initialise cards
-    a0 = Card('criminal', 'criminal.jpg')
-    a1 = Card('person', 'person.jpg')
-
-    print(a0.name)
-    print(a1.name)
-
-    print(id(a0.rect))
-    print(id(a1.rect))
+    a0 = Card(0, 'criminal', 'criminal.jpg')
+    a1 = Card(1, 'person', 'person.jpg')
 
     a1.move((100, 100))
     a1.update()
